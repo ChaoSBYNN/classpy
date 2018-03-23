@@ -5,6 +5,7 @@ import com.github.zxh.classpy.common.FileComponent;
 import com.github.zxh.classpy.gui.jar.JarTreeLoader;
 import com.github.zxh.classpy.gui.jar.JarTreeNode;
 import com.github.zxh.classpy.gui.parsed.HexText;
+import com.github.zxh.classpy.helper.StringHelper;
 import com.github.zxh.classpy.helper.UrlHelper;
 import com.github.zxh.classpy.lua.binarychunk.BinaryChunkParser;
 
@@ -37,7 +38,9 @@ public class OpenFileTask extends Task<OpenFileResult> {
             return new OpenFileResult(url, fileType, rootNode);
         }
 
-        byte[] data = UrlHelper.readData(url);
+        byte[] data = fileType == FileType.BITCOIN_BLOCK
+                ? StringHelper.hex2Bytes(UrlHelper.readOneLine(url))
+                : UrlHelper.readData(url);
         if (fileType == FileType.UNKNOWN) {
             fileType = getFileType(data);
         }
@@ -52,6 +55,9 @@ public class OpenFileTask extends Task<OpenFileResult> {
 
     private static FileType getFileType(URL url) {
         String filename = url.toString().toLowerCase();
+        if (filename.startsWith("https://blockchain.info/rawblock")) {
+            return FileType.BITCOIN_BLOCK;
+        }
         if (filename.endsWith(".jar")) {
             return FileType.JAVA_JAR;
         }
